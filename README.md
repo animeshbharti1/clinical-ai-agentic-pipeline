@@ -2,6 +2,7 @@
 
 > **An Agentic Healthcare Triage System with Real-Time Risk Analysis, Urgent Case Bypass, and Human-in-the-Loop Physician Approval.**
 
+[![Continuous Integration](https://github.com/animeshbharti1/clinical-ai-agentic-pipeline/actions/workflows/ci.yml/badge.svg)](https://github.com/animeshbharti1/clinical-ai-agentic-pipeline/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-teal.svg)](LICENSE)
 [![React](https://img.shields.io/badge/React-19.0-blue.svg)](https://reactjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue.svg)](https://www.typescriptlang.org/)
