@@ -115,7 +115,7 @@ flowchart TD
 ## 🎬 Demo
 
 ### 1. Sequential 3-Agent Workflow Map
-![Sequential 3-Agent Workflow Map](https://ibb.co/cXxh9prC)
+![Sequential 3-Agent Workflow Map](https://i.ibb.co/6JN0SpW1/Screenshot-2026-08-08-162023.png)
 
 ### 2. Ingestion & Multimodal OCR Agent (Teal Node)
 ![Ingestion & Extraction Agent](https://ibb.co/d4MT7cTz)
