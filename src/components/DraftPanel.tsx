@@ -10,7 +10,8 @@ import {
   RefreshCw, 
   ArrowRight,
   CheckCircle,
-  MessageCircleCode
+  MessageCircleCode,
+  Cpu
 } from 'lucide-react';
 
 interface DraftPanelProps {
@@ -43,7 +44,7 @@ export const DraftPanel: React.FC<DraftPanelProps> = ({
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h3 className="text-xl font-bold text-pink-200">Draft Agent</h3>
+              <h3 className="text-xl font-bold text-pink-200">Clinical SOAP Note & Draft Agent</h3>
               <span className="px-2.5 py-0.5 rounded-full bg-pink-950 text-pink-300 border border-pink-600/50 text-[11px] font-mono font-bold">
                 REVISION #{revisionCount}
               </span>
@@ -64,9 +65,9 @@ export const DraftPanel: React.FC<DraftPanelProps> = ({
             </button>
           )}
 
-          <span className="px-3 py-1 rounded-full bg-pink-950/60 text-pink-300 border border-pink-700/50 text-xs font-mono flex items-center gap-1.5">
-            <Sparkles className="w-3.5 h-3.5 text-pink-400" />
-            {isRedrafting ? 'LLM RE-DRAFTING IN PROGRESS...' : 'LLM GENERATION COMPLETE'}
+          <span className="px-3 py-1 rounded-full bg-pink-950/80 text-pink-200 border border-pink-500/60 text-xs font-mono flex items-center gap-1.5 shadow">
+            <Cpu className="w-3.5 h-3.5 text-pink-400" />
+            {isRedrafting ? 'LLM RE-DRAFTING IN PROGRESS...' : '🤖 LLM INFERENCE ACTIVE (Gemini / OpenAI API)'}
           </span>
         </div>
       </div>
@@ -77,10 +78,10 @@ export const DraftPanel: React.FC<DraftPanelProps> = ({
           <div className="flex items-center justify-between text-xs">
             <span className="font-bold flex items-center gap-1.5 text-white">
               <MessageCircleCode className="w-4 h-4 text-pink-400" />
-              PHYSICIAN RE-DRAFT FEEDBACK INCORPORATED (REVISION #{revisionCount})
+              PHYSICIAN RE-DRAFT DIRECTIVE INCORPORATED VIA LLM (REVISION #{revisionCount})
             </span>
             <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-pink-800 text-white font-bold">
-              AGENT UPDATED
+              LIVE LLM RE-SYNTHESIS
             </span>
           </div>
           <p className="text-xs text-pink-200 italic">
@@ -96,9 +97,9 @@ export const DraftPanel: React.FC<DraftPanelProps> = ({
             <RefreshCw className="w-10 h-10 animate-spin text-pink-400" />
           </div>
           <div className="space-y-1">
-            <h4 className="text-lg font-bold text-pink-200">Re-Synthesizing Clinical Draft...</h4>
+            <h4 className="text-lg font-bold text-pink-200">Re-Synthesizing Clinical Draft via LLM...</h4>
             <p className="text-xs text-slate-300">
-              Draft Agent is processing physician feedback and refining diagnostic coding & treatment orders.
+              Draft Agent is processing physician feedback via LLM inference and refining diagnostic coding & treatment orders.
             </p>
           </div>
         </div>
@@ -178,7 +179,7 @@ export const DraftPanel: React.FC<DraftPanelProps> = ({
         <div className="pt-4 border-t border-pink-500/20 flex items-center justify-between relative z-10">
           <span className="text-xs text-slate-400 font-mono flex items-center gap-1">
             <CheckCircle className="w-4 h-4 text-emerald-400" />
-            Revised draft ready for physician evaluation.
+            Revised LLM draft ready for physician evaluation.
           </span>
           <button
             onClick={onSendToDoctor}

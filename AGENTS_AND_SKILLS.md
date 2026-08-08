@@ -92,7 +92,8 @@ Skills are modular, stateless functional capabilities utilized by one or more AI
 - [`src/prompts/analysis.ts`](file:///c:/Users/anime/Desktop/Projects/Task%20A%201/src/prompts/analysis.ts): Prompts for risk scoring & abnormality threshold detection.
 - [`src/prompts/soap.ts`](file:///c:/Users/anime/Desktop/Projects/Task%20A%201/src/prompts/soap.ts): Prompts for SOAP note synthesis, ICD-10 coding & re-draft revision loops.
 
-### 🔗 Shared Data & Utility Layer (`src/types/`, `src/utils/`, `src/data/`)
+### 🔗 Shared Data & Utility Layer (`src/types/`, `src/services/`, `src/utils/`, `src/data/`)
+- [`src/services/aiService.ts`](file:///c:/Users/anime/Desktop/Projects/Task%20A%201/src/services/aiService.ts): Live LLM inference service (`generateLiveSoapDraft`) supporting OpenAI / Gemini API calls with zero-latency deterministic local fallback.
 - [`src/types/clinical.ts`](file:///c:/Users/anime/Desktop/Projects/Task%20A%201/src/types/clinical.ts): TypeScript type interfaces for patient scenarios, FHIR fields, analysis, draft, and audit records.
 - [`src/utils/filePatientParser.ts`](file:///c:/Users/anime/Desktop/Projects/Task%20A%201/src/utils/filePatientParser.ts): Multimodal text/PDF stream parser & automated risk classifier.
 - [`src/data/mockPatients.ts`](file:///c:/Users/anime/Desktop/Projects/Task%20A%201/src/data/mockPatients.ts): Preset mock patient datasets (Critical STEMI, Moderate Asthma, Routine Checkup).
