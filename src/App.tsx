@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { MOCK_PATIENTS } from './data/mockPatients';
+import { generateLiveSoapDraft } from './services/aiService';
+import type { LlmConfig } from './services/aiService';
 import type { 
   PatientScenario, 
   PipelineStage, 
@@ -219,8 +221,8 @@ export function App() {
     );
   };
 
-  // Interactive AI Re-Drafting Flow
-  const handleDoctorReDraft = (feedback: string) => {
+  // Interactive AI Re-Drafting Flow with Live LLM Service Call
+  const handleDoctorReDraft = async (feedback: string, customConfig?: LlmConfig) => {
     setCurrentStage('drafting');
     setActiveTab('draft');
     setIsRedrafting(true);
@@ -230,39 +232,45 @@ export function App() {
       'Doctor Review Gate', 
       'Doctor (Human)', 
       'REQUEST_RE_DRAFT', 
-      `Requested AI re-drafting. Physician feedback: "${feedback}"`, 
+      `Requested AI re-drafting via LLM. Physician feedback: "${feedback}"`, 
       'pink'
     );
 
-    // Simulate Agentic LLM Re-synthesis
-    setTimeout(() => {
-      const nextRev = revisionCount + 1;
-      setRevisionCount(nextRev);
+    const nextRev = revisionCount + 1;
+    setRevisionCount(nextRev);
 
-      const updatedDraft = {
-        ...patient.draft,
-        clinicalSummary: `[REVISION #${nextRev} - INCORPORATING PHYSICIAN FEEDBACK]: ${patient.draft.clinicalSummary}\n\n• Agent Update Rationale: Refined per attending physician feedback: "${feedback}". Diagnostic confidence calibrated.`,
-        proposedTreatmentPlan: [
-          ...patient.draft.proposedTreatmentPlan,
-          `Revised Order (Physician Directive): ${feedback}`
-        ]
-      };
+    // Call Live LLM Inference Service (with user hand-entry credentials or local fallback)
+    const llmRes = await generateLiveSoapDraft(
+      JSON.stringify(patient.extracted),
+      feedback,
+      nextRev,
+      patient.draft,
+      customConfig
+    );
 
-      setPatient({
-        ...patient,
-        draft: updatedDraft
-      });
+    const updatedDraft = {
+      ...patient.draft,
+      clinicalSummary: llmRes.data.clinicalSummary,
+      proposedTreatmentPlan: [
+        ...patient.draft.proposedTreatmentPlan,
+        `Revised Order (Physician Directive via ${llmRes.modelUsed}): ${feedback}`
+      ]
+    };
 
-      setIsRedrafting(false);
+    setPatient({
+      ...patient,
+      draft: updatedDraft
+    });
 
-      addAuditLog(
-        'Draft Agent', 
-        'Draft Agent', 
-        'RE_SYNTHESIZE_NOTE', 
-        `Completed Revision #${nextRev} incorporating physician directive: "${feedback}"`, 
-        'pink'
-      );
-    }, 1200);
+    setIsRedrafting(false);
+
+    addAuditLog(
+      'Draft Agent', 
+      'Draft Agent', 
+      'RE_SYNTHESIZE_NOTE', 
+      `Completed LLM Revision #${nextRev} via ${llmRes.modelUsed} (${llmRes.latencyMs}ms) incorporating: "${feedback}"`, 
+      'pink'
+    );
   };
 
   return (

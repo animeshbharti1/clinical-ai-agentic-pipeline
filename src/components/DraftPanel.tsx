@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import type { ClinicalDraft } from '../types/clinical';
+import type { LlmConfig } from '../services/aiService';
 import { 
   FileCheck, 
-  Sparkles, 
   Stethoscope, 
   MessageSquare, 
   Tag, 
@@ -10,7 +10,11 @@ import {
   RefreshCw, 
   ArrowRight,
   CheckCircle,
-  MessageCircleCode
+  MessageCircleCode,
+  Key,
+  ChevronDown,
+  ChevronUp,
+  Cpu
 } from 'lucide-react';
 
 interface DraftPanelProps {
@@ -19,7 +23,7 @@ interface DraftPanelProps {
   reDraftFeedback?: string | null;
   revisionCount?: number;
   onSendToDoctor?: () => void;
-  onTriggerReDraft?: () => void;
+  onTriggerReDraft?: (customConfig?: LlmConfig) => void;
 }
 
 export const DraftPanel: React.FC<DraftPanelProps> = ({ 
@@ -30,6 +34,21 @@ export const DraftPanel: React.FC<DraftPanelProps> = ({
   onSendToDoctor,
   onTriggerReDraft
 }) => {
+  const [showConfig, setShowConfig] = useState(false);
+  const [provider, setProvider] = useState<'gemini' | 'openai' | 'openrouter'>('gemini');
+  const [apiKey, setApiKey] = useState('');
+  const [modelName, setModelName] = useState('gemini-1.5-flash');
+
+  const handleReDraftClick = () => {
+    if (onTriggerReDraft) {
+      onTriggerReDraft({
+        provider,
+        apiKey: apiKey.trim(),
+        modelName: modelName.trim()
+      });
+    }
+  };
+
   return (
     <div className="glass-panel p-6 border-pink-500/40 space-y-6 relative overflow-hidden">
       {/* Background Pink Glow */}
@@ -43,7 +62,7 @@ export const DraftPanel: React.FC<DraftPanelProps> = ({
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h3 className="text-xl font-bold text-pink-200">Draft Agent</h3>
+              <h3 className="text-xl font-bold text-pink-200">Clinical SOAP Note & Draft Agent</h3>
               <span className="px-2.5 py-0.5 rounded-full bg-pink-950 text-pink-300 border border-pink-600/50 text-[11px] font-mono font-bold">
                 REVISION #{revisionCount}
               </span>
@@ -53,23 +72,99 @@ export const DraftPanel: React.FC<DraftPanelProps> = ({
         </div>
 
         <div className="flex items-center gap-3">
+          <button
+            onClick={() => setShowConfig(!showConfig)}
+            className="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-pink-300 border border-pink-500/30 text-xs font-semibold flex items-center gap-1.5 transition"
+          >
+            <Key className="w-3.5 h-3.5 text-pink-400" />
+            <span>Configure LLM API Key</span>
+            {showConfig ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+          </button>
+
           {onTriggerReDraft && (
             <button 
-              onClick={onTriggerReDraft}
+              onClick={handleReDraftClick}
               disabled={isRedrafting}
-              className="px-3 py-1.5 rounded-lg bg-pink-950 hover:bg-pink-900 text-pink-200 text-xs font-semibold border border-pink-600/50 flex items-center gap-1.5 transition"
+              className="px-3.5 py-1.5 rounded-lg bg-pink-950 hover:bg-pink-900 text-pink-200 text-xs font-semibold border border-pink-600/50 flex items-center gap-1.5 transition shadow"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${isRedrafting ? 'animate-spin' : ''}`} />
               Re-Synthesize LLM Note
             </button>
           )}
-
-          <span className="px-3 py-1 rounded-full bg-pink-950/60 text-pink-300 border border-pink-700/50 text-xs font-mono flex items-center gap-1.5">
-            <Sparkles className="w-3.5 h-3.5 text-pink-400" />
-            {isRedrafting ? 'LLM RE-DRAFTING IN PROGRESS...' : 'LLM GENERATION COMPLETE'}
-          </span>
         </div>
       </div>
+
+      {/* Interactive LLM Hand-Entry Credentials Panel */}
+      {showConfig && (
+        <div className="p-4 rounded-xl bg-slate-950/90 border border-pink-500/40 space-y-3 relative z-20">
+          <div className="flex items-center justify-between text-xs border-b border-slate-800 pb-2">
+            <span className="font-bold text-pink-300 flex items-center gap-1.5">
+              <Cpu className="w-4 h-4 text-pink-400" />
+              Live LLM Inference Configuration (Enter API Credentials by Hand)
+            </span>
+            <span className="text-[10px] text-slate-400 font-mono">Client-Side Runtime Call</span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+            <div>
+              <label className="block text-slate-400 text-[11px] mb-1 font-semibold">API Provider</label>
+              <select
+                value={provider}
+                onChange={(e) => {
+                  const p = e.target.value as any;
+                  setProvider(p);
+                  if (p === 'gemini') setModelName('gemini-1.5-flash');
+                  else if (p === 'openai') setModelName('gpt-4o-mini');
+                  else if (p === 'openrouter') setModelName('meta-llama/llama-3-8b-instruct:free');
+                }}
+                className="w-full px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-white text-xs outline-none focus:ring-2 focus:ring-pink-500"
+              >
+                <option value="gemini">Google Gemini API</option>
+                <option value="openai">OpenAI API</option>
+                <option value="openrouter">OpenRouter API</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-slate-400 text-[11px] mb-1 font-semibold">API Key (Enter by hand)</label>
+              <input
+                type="password"
+                placeholder="Paste API Key (e.g. AIzaSy... or sk-...)"
+                value={apiKey}
+                onChange={(e) => setApiKey(e.target.value)}
+                className="w-full px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-white text-xs outline-none focus:ring-2 focus:ring-pink-500 font-mono"
+              />
+            </div>
+
+            <div>
+              <label className="block text-slate-400 text-[11px] mb-1 font-semibold">Target Model</label>
+              <input
+                type="text"
+                placeholder="Model Name"
+                value={modelName}
+                onChange={(e) => setModelName(e.target.value)}
+                className="w-full px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-white text-xs outline-none focus:ring-2 focus:ring-pink-500 font-mono"
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between text-[11px] text-slate-400 pt-1">
+            <span>
+              {apiKey.trim() ? (
+                <strong className="text-emerald-400">✓ API Key Configured. Live LLM API calls active.</strong>
+              ) : (
+                <span className="text-amber-400">⚡ No API key entered — local deterministic engine fallback active.</span>
+              )}
+            </span>
+            <button
+              onClick={handleReDraftClick}
+              className="px-3 py-1 rounded bg-pink-900 hover:bg-pink-800 text-pink-100 text-[11px] font-bold border border-pink-600/40"
+            >
+              Apply & Run Live LLM Call
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Re-Draft Feedback Banner if Physician Feedback Exists */}
       {reDraftFeedback && (
@@ -77,7 +172,7 @@ export const DraftPanel: React.FC<DraftPanelProps> = ({
           <div className="flex items-center justify-between text-xs">
             <span className="font-bold flex items-center gap-1.5 text-white">
               <MessageCircleCode className="w-4 h-4 text-pink-400" />
-              PHYSICIAN RE-DRAFT FEEDBACK INCORPORATED (REVISION #{revisionCount})
+              PHYSICIAN RE-DRAFT DIRECTIVE INCORPORATED (REVISION #{revisionCount})
             </span>
             <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-pink-800 text-white font-bold">
               AGENT UPDATED
@@ -96,9 +191,9 @@ export const DraftPanel: React.FC<DraftPanelProps> = ({
             <RefreshCw className="w-10 h-10 animate-spin text-pink-400" />
           </div>
           <div className="space-y-1">
-            <h4 className="text-lg font-bold text-pink-200">Re-Synthesizing Clinical Draft...</h4>
+            <h4 className="text-lg font-bold text-pink-200">Re-Synthesizing Clinical Draft via LLM...</h4>
             <p className="text-xs text-slate-300">
-              Draft Agent is processing physician feedback and refining diagnostic coding & treatment orders.
+              Draft Agent is processing physician feedback via LLM model inference and refining diagnostic coding.
             </p>
           </div>
         </div>

@@ -137,3 +137,17 @@ flowchart TD
    - Doctors can reject drafts or request revisions with specific feedback (e.g., *"Add beta-blocker"*), sending the payload back to the Draft Agent (`REVISION #2`) for instant re-synthesis.
 4. **Immutable Audit & Compliance Log**:
    - Every action, timestamp, risk score, physician edit, and dispatch event is logged in a compliance audit trail with JSON export capabilities.
+
+---
+
+## 🧠 Hybrid Agent Engineering Rationale
+
+Our pipeline intentionally employs a **Hybrid Agent Engineering Strategy** separating deterministic clinical safety guardrails from dynamic LLM model inference:
+
+| Agent Node | Engine Used | Technical Rationale & Defensibility |
+| :--- | :--- | :--- |
+| **🩵 Ingestion & Extraction Agent (Teal)** | **Deterministic RegEx Parser** | **Zero-Hallucination Safety**: Patient vital signs (BP, HR, SpO2) and drug dosages must never be hallucinated by an LLM. Deterministic RegEx parsing guarantees 100% numerical fidelity from raw documents. |
+| **🧡 Risk Analysis Agent (Coral)** | **Rule Engine + Threshold Baselines** | **Clinical Guideline Compliance**: Triage urgency scores ($0-100$) must strictly follow established emergency medicine thresholds (e.g. Systolic BP $>160\text{ mmHg}$, $2.5\text{mm ST-elevation}$) rather than subjective LLM variance. |
+| **🩷 Clinical SOAP Draft Agent (Pink)** | **Live LLM Inference (`generateLiveSoapDraft`)** | **Generative Narrative Synthesis & Re-Drafting**: LLM inference is utilized where generative AI excels — synthesizing subjective/objective history into clinical SOAP notes, proposing ICD-10 codes, and incorporating physician feedback during re-drafting (`REVISION #2`). |
+| **🟡 Approval Gatekeeper (Amber)** | **Human-in-the-Loop Verification** | **Legal & Patient Safety Checkpoint**: Ensures no AI draft executes downstream without explicit physician digital signature and override capability. |
+
