@@ -224,7 +224,7 @@ The compiled output will be available in the `dist/` directory.
 
 ## 👨‍💻 Authors
 
-Developed with ❤️ by **Animesh Bharti & Team** for the Clinical AI Hackathon.
+Developed with ❤️ by **Team Anomaly** for **Do or [Redacted] ADCL challenge**.
 
 * **GitHub**: [@animeshbharti1](https://github.com/animeshbharti1)
 * **Project Repository**: [clinical-ai-agentic-pipeline](https://github.com/animeshbharti1/clinical-ai-agentic-pipeline)
