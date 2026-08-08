@@ -14,7 +14,9 @@ import {
   Key,
   ChevronDown,
   ChevronUp,
-  Cpu
+  Cpu,
+  Sparkles,
+  Send
 } from 'lucide-react';
 
 interface DraftPanelProps {
@@ -23,7 +25,7 @@ interface DraftPanelProps {
   reDraftFeedback?: string | null;
   revisionCount?: number;
   onSendToDoctor?: () => void;
-  onTriggerReDraft?: (customConfig?: LlmConfig) => void;
+  onTriggerReDraft?: (customConfig?: LlmConfig, customFeedback?: string) => void;
 }
 
 export const DraftPanel: React.FC<DraftPanelProps> = ({ 
@@ -38,14 +40,18 @@ export const DraftPanel: React.FC<DraftPanelProps> = ({
   const [provider, setProvider] = useState<'gemini' | 'openai' | 'openrouter'>('gemini');
   const [apiKey, setApiKey] = useState('');
   const [modelName, setModelName] = useState('gemini-1.5-flash');
+  const [customDirective, setCustomDirective] = useState('');
 
-  const handleReDraftClick = () => {
+  const handleReDraftClick = (directiveOverride?: string) => {
     if (onTriggerReDraft) {
-      onTriggerReDraft({
-        provider,
-        apiKey: apiKey.trim(),
-        modelName: modelName.trim()
-      });
+      onTriggerReDraft(
+        {
+          provider,
+          apiKey: apiKey.trim(),
+          modelName: modelName.trim()
+        },
+        directiveOverride || customDirective.trim() || undefined
+      );
     }
   };
 
@@ -81,28 +87,29 @@ export const DraftPanel: React.FC<DraftPanelProps> = ({
             {showConfig ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
           </button>
 
-          {onTriggerReDraft && (
-            <button 
-              onClick={handleReDraftClick}
-              disabled={isRedrafting}
-              className="px-3.5 py-1.5 rounded-lg bg-pink-950 hover:bg-pink-900 text-pink-200 text-xs font-semibold border border-pink-600/50 flex items-center gap-1.5 transition shadow"
-            >
-              <RefreshCw className={`w-3.5 h-3.5 ${isRedrafting ? 'animate-spin' : ''}`} />
-              Re-Synthesize LLM Note
-            </button>
+          {apiKey.trim() ? (
+            <span className="px-3 py-1 rounded-full bg-emerald-950/80 text-emerald-300 border border-emerald-500/60 text-xs font-mono font-bold flex items-center gap-1.5 shadow">
+              <Cpu className="w-3.5 h-3.5 text-emerald-400" />
+              🟢 Live {provider.toUpperCase()} Model Active
+            </span>
+          ) : (
+            <span className="px-3 py-1 rounded-full bg-pink-950/60 text-pink-300 border border-pink-700/50 text-xs font-mono flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5 text-pink-400" />
+              ⚡ Deterministic Engine Active
+            </span>
           )}
         </div>
       </div>
 
-      {/* Interactive LLM Hand-Entry Credentials Panel */}
+      {/* Interactive LLM Credentials Panel */}
       {showConfig && (
-        <div className="p-4 rounded-xl bg-slate-950/90 border border-pink-500/40 space-y-3 relative z-20">
+        <div className="p-4 rounded-xl bg-slate-950/90 border border-pink-500/40 space-y-3 relative z-20 shadow-2xl">
           <div className="flex items-center justify-between text-xs border-b border-slate-800 pb-2">
             <span className="font-bold text-pink-300 flex items-center gap-1.5">
               <Cpu className="w-4 h-4 text-pink-400" />
-              Live LLM Inference Configuration (Enter API Credentials by Hand)
+              Live LLM Inference Configuration (Enter Credentials By Hand)
             </span>
-            <span className="text-[10px] text-slate-400 font-mono">Client-Side Runtime Call</span>
+            <span className="text-[10px] text-slate-400 font-mono">Client-Side Runtime API Call</span>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
@@ -126,7 +133,7 @@ export const DraftPanel: React.FC<DraftPanelProps> = ({
             </div>
 
             <div>
-              <label className="block text-slate-400 text-[11px] mb-1 font-semibold">API Key (Enter by hand)</label>
+              <label className="block text-slate-400 text-[11px] mb-1 font-semibold">API Key (Paste here)</label>
               <input
                 type="password"
                 placeholder="Paste API Key (e.g. AIzaSy... or sk-...)"
@@ -151,13 +158,13 @@ export const DraftPanel: React.FC<DraftPanelProps> = ({
           <div className="flex items-center justify-between text-[11px] text-slate-400 pt-1">
             <span>
               {apiKey.trim() ? (
-                <strong className="text-emerald-400">✓ API Key Configured. Live LLM API calls active.</strong>
+                <strong className="text-emerald-400">✓ Key configured. Live API calls active.</strong>
               ) : (
                 <span className="text-amber-400">⚡ No API key entered — local deterministic engine fallback active.</span>
               )}
             </span>
             <button
-              onClick={handleReDraftClick}
+              onClick={() => handleReDraftClick()}
               className="px-3 py-1 rounded bg-pink-900 hover:bg-pink-800 text-pink-100 text-[11px] font-bold border border-pink-600/40"
             >
               Apply & Run Live LLM Call
@@ -165,6 +172,35 @@ export const DraftPanel: React.FC<DraftPanelProps> = ({
           </div>
         </div>
       )}
+
+      {/* Interactive Quick Re-Draft Directive Box */}
+      <div className="p-3.5 rounded-xl bg-slate-950/80 border border-pink-500/30 space-y-2 relative z-10">
+        <div className="flex items-center justify-between text-xs">
+          <span className="font-bold text-pink-300 flex items-center gap-1.5">
+            <Sparkles className="w-4 h-4 text-pink-400" />
+            Interactive Physician AI Directive Box (Test Dynamic Re-Drafting)
+          </span>
+          <span className="text-[10px] text-slate-400 font-mono">Live Prompt Steer</span>
+        </div>
+        <div className="flex gap-2">
+          <input 
+            type="text"
+            placeholder="Type custom physician directive (e.g. 'Add oral Prednisone 40mg daily x 5d & reduce follow-up to 2 days')..."
+            value={customDirective}
+            onChange={(e) => setCustomDirective(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleReDraftClick()}
+            className="flex-1 px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-xs text-white outline-none focus:ring-2 focus:ring-pink-500 font-sans"
+          />
+          <button
+            onClick={() => handleReDraftClick()}
+            disabled={isRedrafting}
+            className="px-4 py-2 rounded-lg bg-pink-600 hover:bg-pink-500 text-white font-bold text-xs shadow flex items-center gap-1.5 transition"
+          >
+            <Send className="w-3.5 h-3.5" />
+            <span>✨ Re-Synthesize Note</span>
+          </button>
+        </div>
+      </div>
 
       {/* Re-Draft Feedback Banner if Physician Feedback Exists */}
       {reDraftFeedback && (
@@ -193,7 +229,7 @@ export const DraftPanel: React.FC<DraftPanelProps> = ({
           <div className="space-y-1">
             <h4 className="text-lg font-bold text-pink-200">Re-Synthesizing Clinical Draft via LLM...</h4>
             <p className="text-xs text-slate-300">
-              Draft Agent is processing physician feedback via LLM model inference and refining diagnostic coding.
+              Draft Agent is processing physician directive via LLM model inference and refining diagnostic coding.
             </p>
           </div>
         </div>
@@ -210,7 +246,7 @@ export const DraftPanel: React.FC<DraftPanelProps> = ({
                 </span>
                 <span className="text-[10px] text-pink-400 font-mono">Ver: #{revisionCount}</span>
               </div>
-              <div className="p-3.5 rounded-lg bg-slate-900/90 border border-slate-700 text-slate-200 text-xs leading-relaxed font-sans">
+              <div className="p-3.5 rounded-lg bg-slate-900/90 border border-slate-700 text-slate-200 text-xs leading-relaxed font-sans whitespace-pre-line">
                 {draft.clinicalSummary}
               </div>
             </div>

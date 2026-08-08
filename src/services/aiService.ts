@@ -16,6 +16,38 @@ export interface LiveLlmResponse<T> {
 }
 
 /**
+ * Extracts and cleans raw LLM text outputs into clean human-readable clinical medical text,
+ * stripping raw JSON brackets, markdown code blocks, or debug headers.
+ */
+function extractCleanClinicalText(rawText: string): string {
+  if (!rawText) return '';
+  let cleaned = rawText.trim();
+
+  // Strip markdown code block ticks ```json ... ```
+  cleaned = cleaned.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
+
+  // If the LLM returned a JSON object, extract the clinicalSummary or narrative field
+  if (cleaned.startsWith('{') && cleaned.endsWith('}')) {
+    try {
+      const parsed = JSON.parse(cleaned);
+      if (parsed.clinicalSummary && typeof parsed.clinicalSummary === 'string') {
+        return parsed.clinicalSummary.trim();
+      }
+      if (parsed.summary && typeof parsed.summary === 'string') {
+        return parsed.summary.trim();
+      }
+      if (parsed.narrative && typeof parsed.narrative === 'string') {
+        return parsed.narrative.trim();
+      }
+    } catch {
+      // Continue with cleaned string if JSON parse fails
+    }
+  }
+
+  return cleaned;
+}
+
+/**
  * Executes live LLM model inference using user-provided API credentials.
  */
 export async function generateLiveSoapDraft(
@@ -40,17 +72,18 @@ export async function generateLiveSoapDraft(
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            contents: [{ parts: [{ text: `${SOAP_DRAFT_SYSTEM_PROMPT}\n\n${prompt}` }] }]
+            contents: [{ parts: [{ text: `${SOAP_DRAFT_SYSTEM_PROMPT}\n\nIMPORTANT: Return ONLY a clean, professional clinical narrative summary in plain medical text. Do NOT wrap in JSON format.\n\n${prompt}` }] }]
           })
         });
 
         if (response.ok) {
           const json = await response.json();
-          const llmText = json.candidates?.[0]?.content?.parts?.[0]?.text;
-          if (llmText) {
+          const rawLlmText = json.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (rawLlmText) {
+            const cleanNarrative = extractCleanClinicalText(rawLlmText);
             return {
               data: {
-                clinicalSummary: llmText,
+                clinicalSummary: cleanNarrative,
                 suggestedDiagnoses: fallbackDraft?.suggestedDiagnoses || [
                   { code: 'I21.1', name: 'ST elevation (STEMI) myocardial infarction', probability: 0.95 }
                 ],
@@ -84,7 +117,7 @@ export async function generateLiveSoapDraft(
           body: JSON.stringify({
             model: modelName,
             messages: [
-              { role: 'system', content: SOAP_DRAFT_SYSTEM_PROMPT },
+              { role: 'system', content: `${SOAP_DRAFT_SYSTEM_PROMPT}\nReturn ONLY clean clinical medical text.` },
               { role: 'user', content: prompt }
             ],
             temperature: 0.2
@@ -93,11 +126,12 @@ export async function generateLiveSoapDraft(
 
         if (response.ok) {
           const json = await response.json();
-          const llmText = json.choices?.[0]?.message?.content;
-          if (llmText) {
+          const rawLlmText = json.choices?.[0]?.message?.content;
+          if (rawLlmText) {
+            const cleanNarrative = extractCleanClinicalText(rawLlmText);
             return {
               data: {
-                clinicalSummary: llmText,
+                clinicalSummary: cleanNarrative,
                 suggestedDiagnoses: fallbackDraft?.suggestedDiagnoses || [
                   { code: 'I21.1', name: 'ST elevation (STEMI) myocardial infarction', probability: 0.95 }
                 ],
@@ -120,13 +154,17 @@ export async function generateLiveSoapDraft(
     }
   }
 
-  // Deterministic Local Fallback Engine - Dynamically updates clinical summary narrative!
-  const baseSummary = fallbackDraft?.clinicalSummary || 'Patient clinical history and telemetry snapshot reviewed.';
-  const updatedSummary = `[SOAP DRAFT REVISION #${revisionCount} - SYNTHESIZED NARRATIVE]: ${baseSummary}\n\n• Agent Update Action: ${physicianFeedback ? `Incorporated attending physician directive: "${physicianFeedback}". Care plan updated.` : 'Calibrated diagnostic confidence and treatment order checklist.'}`;
+  // Deterministic Local Fallback Engine - Formats clean human-readable medical text!
+  let cleanSummary = fallbackDraft?.clinicalSummary || 'Patient presenting with acute clinical symptoms evaluated per emergency triage protocols.';
+
+  // If there is physician feedback directive, append a clean medical directive note
+  if (physicianFeedback) {
+    cleanSummary = `${cleanSummary}\n\n• Attending Physician Directive (Revision #${revisionCount}): Re-evaluated per directive: "${physicianFeedback}". Care plan and order checklist updated accordingly.`;
+  }
 
   return {
     data: {
-      clinicalSummary: updatedSummary,
+      clinicalSummary: cleanSummary,
       suggestedDiagnoses: fallbackDraft?.suggestedDiagnoses || [
         { code: 'I21.1', name: 'ST elevation (STEMI) myocardial infarction of inferior wall', probability: 0.94 }
       ],
