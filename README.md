@@ -127,7 +127,7 @@ flowchart TD
 ![Clinical SOAP Note & Draft Agent](https://i.ibb.co/1YhjY83n/Screenshot-2026-08-08-162117.png)
 
 ### 5. Human Physician Approval Gatekeeper (Amber Gate)
-![Doctor Review Dashboard Gatekeeper](https://i.ibb.co/QvQgXcg1/Screenshot-2026-08-08-162042.png)
+![Doctor Review Dashboard Gatekeeper](https://i.ibb.co/4nq4XpD8/Screenshot-2026-08-08-162142.png)
 
 ### 6. Post-Approval Action Runners 
 ![post approval actions (sms,notify,update & schedule)](https://i.ibb.co/LD5616xC/Screenshot-2026-08-08-162157.png)
