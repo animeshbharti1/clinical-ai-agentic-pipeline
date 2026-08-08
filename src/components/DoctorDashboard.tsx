@@ -69,7 +69,7 @@ export const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
         spread: 70,
         origin: { y: 0.6 }
       });
-    } catch (e) {
+    } catch {
       // fallback safe
     }
   };

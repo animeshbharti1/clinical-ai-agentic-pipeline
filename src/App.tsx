@@ -446,7 +446,7 @@ export function App() {
               setCurrentStage('doctor_review');
               setActiveTab('doctor');
             }}
-            onTriggerReDraft={() => handleDoctorReDraft(reDraftFeedback || 'Refining clinical narrative.')}
+            onTriggerReDraft={(config) => handleDoctorReDraft(reDraftFeedback || 'Refining clinical narrative.', config)}
           />
         )}
 
