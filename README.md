@@ -121,7 +121,7 @@ flowchart TD
 ![Ingestion & Extraction Agent](https://i.ibb.co/QvQgXcg1/Screenshot-2026-08-08-162042.png)
 
 ### 3. Clinical Risk & Abnormality Analysis Agent (Coral Node)
-![Clinical Risk Analysis Agent](https://i.ibb.co/4nq4XpD8/Screenshot-2026-08-08-162142.png)
+![Clinical Risk Analysis Agent](https://i.ibb.co/Ps1nf9ck/Screenshot-2026-08-08-162059.png)
 
 ### 4. Clinical SOAP Note & AI Draft Agent (Pink Node)
 ![Clinical SOAP Note & Draft Agent](https://i.ibb.co/1YhjY83n/Screenshot-2026-08-08-162117.png)
