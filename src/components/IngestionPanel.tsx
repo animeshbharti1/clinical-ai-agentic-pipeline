@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import type { PatientScenario } from '../types/clinical';
-import { parseFileToPatientScenario } from '../utils/filePatientParser';
+import { parseFileToPatientScenario, isMedicalDocument } from '../utils/filePatientParser';
 import { 
   FileText, 
   Cpu, 
@@ -20,7 +20,8 @@ import {
   X,
   Play,
   FileCheck2,
-  AlertCircle
+  AlertCircle,
+  XCircle
 } from 'lucide-react';
 
 interface IngestionPanelProps {
@@ -48,19 +49,32 @@ export const IngestionPanel: React.FC<IngestionPanelProps> = ({
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [pendingScenario, setPendingScenario] = useState<PatientScenario | null>(null);
 
+  // Invalid / Non-Medical File Error State
+  const [invalidFileError, setInvalidFileError] = useState<string | null>(null);
+
   const [isProcessingFile, setIsProcessingFile] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
   const [showTextPasteBox, setShowTextPasteBox] = useState(false);
   const [customTextBuffer, setCustomTextBuffer] = useState('');
 
-  // 1. When user selects a file, parse it accurately
+  // 1. When user selects a file, verify if it's a valid medical document
   const handleFileSelected = (file: File) => {
     setIsProcessingFile(true);
+    setInvalidFileError(null);
 
     if (file.type === 'text/plain') {
       const reader = new FileReader();
       reader.onload = (e) => {
         const text = (e.target?.result as string) || '';
+
+        // Verify if medical document
+        if (!isMedicalDocument(file.name, text)) {
+          setInvalidFileError(`WRONG FILE: The document "${file.name}" is not a recognized clinical report or medical file.`);
+          setIsProcessingFile(false);
+          if (fileInputRef.current) fileInputRef.current.value = '';
+          return;
+        }
+
         const parsed = parseFileToPatientScenario(file.name, text);
         setPendingFile(file);
         setPendingScenario(parsed);
@@ -72,6 +86,14 @@ export const IngestionPanel: React.FC<IngestionPanelProps> = ({
       const reader = new FileReader();
       reader.onload = (e) => {
         let rawContent = (e.target?.result as string) || '';
+
+        // Verify if medical document
+        if (!isMedicalDocument(file.name, rawContent)) {
+          setInvalidFileError(`WRONG FILE: The document "${file.name}" is not a recognized clinical report or medical file.`);
+          setIsProcessingFile(false);
+          if (fileInputRef.current) fileInputRef.current.value = '';
+          return;
+        }
 
         // Extract any readable text stream chunks inside PDF objects
         const pdfStreamMatches = rawContent.match(/\(([^()]{2,})\)/g)?.map(s => s.slice(1, -1)).join(' ') || '';
@@ -123,12 +145,14 @@ export const IngestionPanel: React.FC<IngestionPanelProps> = ({
     // Clear pending state
     setPendingFile(null);
     setPendingScenario(null);
+    setInvalidFileError(null);
   };
 
   // 3. Cancel / Reject Pending File
   const handleCancelPending = () => {
     setPendingFile(null);
     setPendingScenario(null);
+    setInvalidFileError(null);
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
@@ -148,13 +172,20 @@ export const IngestionPanel: React.FC<IngestionPanelProps> = ({
 
   const handlePasteExtractSubmit = () => {
     if (!customTextBuffer.trim()) return;
+
     const sampleName = `Custom_Pasted_PDF_Report.pdf`;
+    if (!isMedicalDocument(sampleName, customTextBuffer)) {
+      setInvalidFileError("WRONG FILE: The pasted text does not contain recognized clinical fields or medical report data.");
+      return;
+    }
+
     const parsed = parseFileToPatientScenario(sampleName, customTextBuffer);
     const dummyFile = new File([customTextBuffer], sampleName, { type: 'application/pdf' });
     setPendingFile(dummyFile);
     setPendingScenario(parsed);
     setShowTextPasteBox(false);
     setCustomTextBuffer('');
+    setInvalidFileError(null);
   };
 
   return (
@@ -202,6 +233,39 @@ export const IngestionPanel: React.FC<IngestionPanelProps> = ({
           </button>
         </div>
 
+        {/* PROMINENT INVALID / NON-MEDICAL FILE RED ALERT CARD */}
+        {invalidFileError && (
+          <div className="p-4 rounded-xl bg-red-950/90 border-2 border-red-500 text-red-100 shadow-xl space-y-3 animate-pulse">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-start gap-3">
+                <div className="p-2 rounded-lg bg-red-600 text-white flex-shrink-0">
+                  <XCircle className="w-6 h-6" />
+                </div>
+                <div className="space-y-1 text-xs">
+                  <h4 className="text-sm font-black text-white uppercase tracking-tight flex items-center gap-2">
+                    <span>❌ WRONG FILE DETECTED</span>
+                    <span className="px-2 py-0.5 rounded bg-red-800 font-mono text-[10px]">NON-MEDICAL DOCUMENT</span>
+                  </h4>
+                  <p className="text-red-200 leading-relaxed font-medium">
+                    {invalidFileError}
+                  </p>
+                  <p className="text-[11px] text-slate-300 pt-0.5">
+                    Please upload a valid patient clinical report, ECG telemetry scan, lab result, or discharge summary containing medical fields.
+                  </p>
+                </div>
+              </div>
+
+              <button 
+                onClick={handleCancelPending}
+                className="px-3 py-1.5 rounded-lg bg-red-900 hover:bg-red-800 text-white text-xs font-bold border border-red-500 shadow transition flex items-center gap-1"
+              >
+                <X className="w-3.5 h-3.5" />
+                Try Different File
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Optional Paste Box for direct PDF text pasting */}
         {showTextPasteBox && (
           <div className="p-3.5 rounded-xl bg-slate-900 border border-teal-500/40 space-y-2 text-xs">
@@ -226,8 +290,8 @@ export const IngestionPanel: React.FC<IngestionPanelProps> = ({
           </div>
         )}
 
-        {/* PENDING FILE CONFIRMATION MODAL CARD (If a file was selected but not confirmed) */}
-        {pendingFile && pendingScenario ? (
+        {/* PENDING FILE CONFIRMATION MODAL CARD (If a valid file was selected) */}
+        {pendingFile && pendingScenario && !invalidFileError ? (
           <div className="p-4 rounded-xl bg-teal-950/90 border-2 border-teal-400 text-teal-100 shadow-2xl space-y-3 animate-pulse">
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-start gap-3">
@@ -307,8 +371,8 @@ export const IngestionPanel: React.FC<IngestionPanelProps> = ({
               <div className="py-2 flex items-center gap-3 text-teal-300">
                 <Cpu className="w-6 h-6 animate-spin" />
                 <div className="text-left text-xs">
-                  <span className="font-bold block">Parsing PDF & Extracting Patient Data...</span>
-                  <span className="text-[11px] text-slate-400 font-mono">Extracting patient name, age, gender, vitals & FHIR fields</span>
+                  <span className="font-bold block">Parsing & Verifying Medical Document...</span>
+                  <span className="text-[11px] text-slate-400 font-mono">Verifying clinical fields, patient name, vitals & FHIR fields</span>
                 </div>
               </div>
             ) : uploadedFileName ? (

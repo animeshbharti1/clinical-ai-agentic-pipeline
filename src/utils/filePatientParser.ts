@@ -1,5 +1,47 @@
 import type { PatientScenario, UrgencyLevel } from '../types/clinical';
 
+/**
+ * Validates if the uploaded file content or file name is a valid medical report.
+ */
+export function isMedicalDocument(fileName: string, fileText: string): boolean {
+  const text = (fileText || '').toLowerCase();
+  const name = (fileName || '').toLowerCase();
+
+  // If filename clearly suggests medical/clinical context
+  const medicalFileNameKeywords = ['report', 'patient', 'ecg', 'stemi', 'scan', 'clinical', 'vitals', 'lab', 'medical', 'hospital', 'doctor', 'intake', 'triage', 'sample', 'cardiac', 'asthma'];
+  const hasMedicalFileName = medicalFileNameKeywords.some(kw => name.includes(kw));
+
+  // Medical content keywords
+  const medicalKeywords = [
+    'patient', 'vitals', 'bp', 'blood pressure', 'heart rate', 'hr', 'pulse', 'spo2', 
+    'temperature', 'temp', 'symptoms', 'complaint', 'chief complaint', 'diagnosis', 
+    'medication', 'meds', 'allergy', 'allergies', 'ecg', 'telemetry', 'stemi', 
+    'chest pain', 'asthma', 'breath', 'shortness of breath', 'doctor', 'clinic', 
+    'hospital', 'physician', 'treatment', 'history', 'impression', 'discharge', 
+    'intake', 'mrn', 'lab', 'test', 'scan', 'report', 'prescription', 'rx', 'exam', 
+    'assessment', 'plan', 'cardiac', 'respiratory', 'ed', 'er', 'icu', 'nurse',
+    'oxygen', 'dose', 'mg', 'ml', 'mmhg', 'bpm'
+  ];
+
+  // Count how many distinct medical keywords appear in the document text
+  let matchCount = 0;
+  for (const kw of medicalKeywords) {
+    if (text.includes(kw)) {
+      matchCount++;
+    }
+  }
+
+  // Valid if has medical filename or at least 2 distinct medical keywords in text
+  // Binary PDFs that default to emergency scan fallbacks are treated as valid medical PDFs
+  const isBinaryPdfScan = text.includes('%pdf') || text.includes('tj') || name.endsWith('.pdf');
+  
+  if (isBinaryPdfScan || hasMedicalFileName) {
+    return true;
+  }
+
+  return matchCount >= 2;
+}
+
 export function parseFileToPatientScenario(fileName: string, fileText: string): PatientScenario {
   const text = fileText || '';
   const lowerText = text.toLowerCase();
