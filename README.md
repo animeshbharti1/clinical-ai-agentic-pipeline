@@ -115,19 +115,25 @@ flowchart TD
 ## 🎬 Demo
 
 ### 1. Sequential 3-Agent Workflow Map
-![Sequential 3-Agent Workflow Map](src/assets/screenshots/01-workflow-map.png)
+![Sequential 3-Agent Workflow Map](https://ibb.co/cXxh9prC)
 
 ### 2. Ingestion & Multimodal OCR Agent (Teal Node)
-![Ingestion & Extraction Agent](src/assets/screenshots/02-ingestion-agent.png)
+![Ingestion & Extraction Agent](https://ibb.co/d4MT7cTz)
 
 ### 3. Clinical Risk & Abnormality Analysis Agent (Coral Node)
-![Clinical Risk Analysis Agent](src/assets/screenshots/03-analysis-agent.png)
+![Clinical Risk Analysis Agent](https://ibb.co/20cQfsvJ)
 
 ### 4. Clinical SOAP Note & AI Draft Agent (Pink Node)
-![Clinical SOAP Note & Draft Agent](src/assets/screenshots/04-draft-agent.png)
+![Clinical SOAP Note & Draft Agent](https://ibb.co/mr1gr6mB)
 
 ### 5. Human Physician Approval Gatekeeper (Amber Gate)
-![Doctor Review Dashboard Gatekeeper](src/assets/screenshots/05-doctor-approval-gate.png)
+![Doctor Review Dashboard Gatekeeper](https://ibb.co/xtkzB6c1)
+
+### 6. Post-Approval Action Runners 
+![post approval actions (sms,notify,update & schedule)](https://ibb.co/bjJLXLsr)
+
+### 7. Audit-Logs
+![workflow audit logs](https://ibb.co/S4NC9sr6)
 
 ---
 
