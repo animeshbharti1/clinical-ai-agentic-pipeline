@@ -1,3 +1,8 @@
+# Environment Variables (Keep API keys secret & local)
+.env
+.env.*
+!.env.example
+
 # Logs
 logs
 *.log
